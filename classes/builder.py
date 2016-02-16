@@ -16,7 +16,7 @@ class Builder:
         subprocess.call(['docker', 'run', '--name=' + self.tmp_name, self.image_name, 'setarch', self.arch,
                          'bash', '-c',
                          'pacman -Syu --noconfirm; pacman -Sc --noconfirm'])
-        subprocess.call(['docker', 'commit', self.tmp_name, 'repo-gen'])
+        subprocess.call(['docker', 'commit', self.tmp_name, self.image_name])
         subprocess.call(['docker', 'rm', self.tmp_name])
 
     def build(self, pkgbase):
