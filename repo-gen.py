@@ -6,8 +6,8 @@ from classes.builder import Builder
 from classes.config import Config
 from classes.messageprinter import MessagePrinter
 from classes.repo import Repo
-
 from classes.buildorder import BuildOrder
+from classes.repodb import Repodb
 
 
 parser = OptionParser()
@@ -27,35 +27,52 @@ config = Config('repo-gen.json')
 
 buildorder = BuildOrder(config.skip_directories)
 
-repopath = options.target + '/' + config.reponame + '/os/' + options.arch
+for arch in ['i686', 'x86_64']:
+    MessagePrinter.print_msg("Building packages for " + arch)
 
-repo = Repo(repopath, config.reponame)
+    repopath = options.target + '/' + config.reponame + '/os/' + arch
+    pkgbases = buildorder.pkgbase_in_buildorder
 
-pkgbases = buildorder.pkgbase_in_buildorder
+    repo = Repo(repopath, config.reponame, arch)
+    repo_unexpected = repo.get_unexpected_files(pkgbases)
+    repo_missing = repo.get_missing_files(pkgbases)
+    repo_missingsig = repo.get_missing_sigfiles(pkgbases)
+    repo_unfinished = repo.get_unfinished_pkgbases(pkgbases)
 
-MessagePrinter.print_msg('Unexpected files in repo: ' +
-                         str(repo.get_unexpected_files(pkgbases, options.arch).__len__()))
-for unexpected_file in repo.get_unexpected_files(pkgbases, options.arch):
-    repo.remove_file(unexpected_file)
+    for unexpected_file in repo_unexpected:
+        repo.remove_file(unexpected_file)
 
-MessagePrinter.print_msg('Unexpected files in db: ' +
-                         str(repo.get_unexpected_dbfiles(pkgbases).__len__()))
-for unexpected_dbfile in repo.get_unexpected_dbfiles(pkgbases):
-    repo.remove_dbfile(unexpected_dbfile)
+    repodb = Repodb(repopath, config.reponame)
+    repodb_unexpected = repodb.get_unexpected_files(repo.pkglist)
+    repodb_missing = repodb.get_missing_files(repo.pkglist)
+    repodb_missingsig = repodb.get_missing_sigfiles(repo.pkglist)
 
-MessagePrinter.print_msg('Missing signature files: ' +
-                         str(repo.get_missing_sigfiles(pkgbases, options.arch).__len__()))
+    for missing_dbfile in repodb_missing + repodb_missingsig:
+        repodb.add_package(repopath + '/' + missing_dbfile)
 
-MessagePrinter.print_msg('Unfinished pkgbases: ' +
-                         str(repo.get_unfinished_pkgbases(pkgbases, options.arch).__len__()))
+    for unexpected_dbfile in repodb_unexpected:
+        repodb.remove_package(unexpected_dbfile)
 
-if repo.get_unfinished_pkgbases(pkgbases, options.arch).__len__() > 0:
-    builder = Builder(repopath, config.reponame, options.arch)
+    repodb.finalize()
 
-while repo.get_unfinished_pkgbases(pkgbases, options.arch).__len__() > 0:
-    current_pkgbase = repo.get_unfinished_pkgbases(pkgbases, options.arch)[0]
-    builder.build(current_pkgbase)
-    builder.move_to_repo(current_pkgbase, repo)
+    builder = ''
+    if repo_unfinished.__len__() > 0:
+        builder = Builder(repopath, config, arch, options.directory)
 
-for missing_signature in repo.get_missing_sigfiles(pkgbases, options.arch):
-    repo.sign_file(missing_signature)
+    while repo_unfinished.__len__() > 0:
+        current_pkgbase = repo_unfinished[0]
+        builder.build(current_pkgbase)
+        repo.parse()
+        repo_unfinished = repo.get_unfinished_pkgbases(pkgbases)
+
+        repodb_missing = repodb.get_missing_files(repo.pkglist)
+
+        for missing_dbfile in repodb_missing:
+            repodb.add_package(repopath + '/' + missing_dbfile)
+        repodb.finalize()
+
+    for missing_signature in repo.get_missing_sigfiles(pkgbases):
+        repo.sign_file(missing_signature)
+
+    for missing_dbfile in repodb.get_missing_sigfiles(repo.pkglist):
+        repodb.add_package(repopath + '/' + missing_dbfile)

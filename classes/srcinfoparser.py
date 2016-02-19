@@ -1,68 +1,94 @@
+import re
 import os
-import subprocess
-from classes.package import Package
-from classes.pkgbase import PkgBase
 
 
 class SrcinfoParser:
     def __init__(self, filename):
+        self.values = {
+            'packages': {},
+            'provides': [],
+            'depends': [],
+            'makedepends': []
+        }
+        self.directory = os.path.dirname(filename)
 
-        # TODO Timestamp check
-        if not os.path.isfile(filename):
-            current_dir = os.getcwd()
-            os.chdir(os.path.dirname(filename))
-            subprocess.call('mksrcinfo')
-            os.chdir(current_dir)
+        with open(filename) as f:
+            lines = f.readlines()
+            targetobj = self.values
+            for line in lines:
+                try:
+                    try:
+                        key = re.sub('\t', '', line.split('= ')[0].rstrip())
+                    except TypeError:
+                        key = line.split('= ')[0].rstrip()
 
-        f = open(filename)
+                    value = line.split('= ')[1].rstrip()
+                    if key == 'pkgname':
+                        self.values['packages'][value] = {}
+                        targetobj = self.values['packages'][value]
+                        continue
 
-        self.pkgbase = PkgBase()
-        self.pkgbase.set_srcdir(os.path.dirname(filename))
+                    try:
+                        targetobj[key].append(value)
+                    except KeyError:
+                        targetobj[key] = []
+                        targetobj[key].append(value)
+                except IndexError:
+                    continue
 
-        line = f.readline()
+    def get_expected_pkgnames(self, _arch):
+        temp_array = []
 
-        currentpkg = ''
+        try:
+            epoch = self.values['epoch'][0] + ':'
+        except KeyError:
+            epoch = ''
 
-        while line:
-            if line.startswith('pkgname'):
-                currentpkg = Package()
-                currentpkg.set_name(line.split('= ')[1].rstrip())
-            elif not currentpkg == '':
-                if line.startswith('\tarch = any'):
-                    currentpkg.set_arch_any()
-                elif line.startswith('\n'):
-                    self.pkgbase.append_package(currentpkg)
-                    currentpkg = ''
-                elif line.startswith('\tprovides'):
-                    currentpkg.add_provides(line.split('= ')[1].rstrip())
+        for name in self.values['packages']:
+            try:
+                arch = self.values['packages'][name]['arch'][0]
+            except KeyError:
+                if self.values['arch'][0] == 'any':
+                    arch = 'any'
+                else:
+                    arch = _arch
+            temp_array.append(
+                "%s-%s%s-%s-%s.pkg.tar.xz" % (name, epoch, self.values['pkgver'][0], self.values['pkgrel'][0], arch))
 
-            line = f.readline()
+        return temp_array
 
-        f.seek(0)
-        line = f.readline()
+    def get_expected_dbgnames(self, _arch):
+        temp_array = []
 
-        while not line.startswith('pkgname'):
-            if line.startswith('pkgbase'):
-                self.pkgbase.set_name(line.split('= ')[1].rstrip())
-            elif line.startswith('\tpkgver'):
-                self.pkgbase.set_pkgver(line.split('= ')[1].rstrip())
-            elif line.startswith('\tpkgrel'):
-                self.pkgbase.set_pkgrel(line.split('= ')[1].rstrip())
-            elif line.startswith('\tepoch'):
-                self.pkgbase.set_epoch(line.split('= ')[1].rstrip())
-            elif line.startswith('\tarch'):
-                self.pkgbase.add_arch(line.split('= ')[1].rstrip())
-            elif line.startswith('\tdepends'):
-                self.pkgbase.add_depends(line.split('= ')[1].rstrip())
-            elif line.startswith('\tmakedepends'):
-                self.pkgbase.add_makedepends(line.split('= ')[1].rstrip())
-            elif line.startswith('\tcheckdepends'):
-                self.pkgbase.add_checkdepends(line.split('= ')[1].rstrip())
-            elif line.startswith('\tprovides'):
-                self.pkgbase.add_provides(line.split('= ')[1].rstrip())
+        try:
+            epoch = self.values['epoch'][0] + ':'
+        except KeyError:
+            epoch = ''
 
-            line = f.readline()
-        f.close()
+        for name in self.values['packages']:
+            try:
+                arch = self.values['packages'][name]['arch'][0]
+            except KeyError:
+                if self.values['arch'][0] == 'any':
+                    arch = 'any'
+                else:
+                    arch = _arch
 
-    def get_pkgbase(self):
-        return self.pkgbase
+            if not arch == 'any':
+                temp_array.append(
+                    "%s-debug-%s%s-%s-%s.pkg.tar.xz" % (
+                        name, epoch, self.values['pkgver'][0], self.values['pkgrel'][0], arch))
+
+        return temp_array
+
+    def get_expected_pkgsignames(self, arch):
+        temp_array = []
+        for name in self.get_expected_pkgnames(arch):
+            temp_array.append(name + '.sig')
+        return temp_array
+
+    def get_expected_dbgsignames(self, arch):
+        temp_array = []
+        for name in self.get_expected_dbgnames(arch):
+            temp_array.append(name + '.sig')
+        return temp_array

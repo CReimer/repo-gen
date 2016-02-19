@@ -20,4 +20,4 @@ class MessagePrinter:
 
     @staticmethod
     def print_error(x):
-        print(TermColor.BOLD_RED + '==> ' + TermColor.RESET + TermColor.BOLD + x + TermColor.RESET)
+        print(TermColor.BOLD_RED + '==> ERROR: ' + TermColor.RESET + TermColor.BOLD + x + TermColor.RESET)

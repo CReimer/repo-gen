@@ -9,3 +9,4 @@ class Config:
 
         self.skip_directories = data['skip_directories']
         self.reponame = data['repo_name']
+        self.check_script = data['check_script']

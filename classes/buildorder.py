@@ -18,12 +18,18 @@ class BuildOrder:
             if skip:
                 continue
 
-            pkgbase = SrcinfoParser(os.path.dirname(filename) + '/.SRCINFO').get_pkgbase()
+            pkgbase = SrcinfoParser(os.path.dirname(filename) + '/.SRCINFO')
 
-            for name in pkgbase.get_pkgnames():
+            provides = pkgbase.values['provides']
+
+            for name in pkgbase.values['packages']:
                 pkgbase_by_name[name] = pkgbase
+                try:
+                    provides += pkgbase.values['packages'][name]['provides']
+                except KeyError:
+                    continue
 
-            for name in pkgbase.get_provides():
+            for name in provides:
                 pkgbase_by_name[name] = pkgbase
 
         buildorder = []
@@ -34,7 +40,7 @@ class BuildOrder:
                 pkgbase = pkgbase_by_name_copy[name]
                 append = False
                 only_external_deps = True
-                for pkgname in pkgbase.depends + pkgbase.makedepends:
+                for pkgname in pkgbase.values['depends'] + pkgbase.values['makedepends']:
                     if pkgname in pkgbase_by_name_copy.keys():
                         only_external_deps = False
                         if pkgname in buildorder:
