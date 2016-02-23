@@ -35,8 +35,8 @@ for arch in ['i686', 'x86_64']:
 
     repo = Repo(repopath, config.reponame, arch)
     repo_unexpected = repo.get_unexpected_files(pkgbases)
-    repo_missing = repo.get_missing_files(pkgbases)
-    repo_missingsig = repo.get_missing_sigfiles(pkgbases)
+    # repo_missing = repo.get_missing_files(pkgbases)
+    repo_missingsig = repo.get_missing_sigfiles()
     repo_unfinished = repo.get_unfinished_pkgbases(pkgbases)
 
     for unexpected_file in repo_unexpected:
@@ -45,9 +45,9 @@ for arch in ['i686', 'x86_64']:
     repodb = Repodb(repopath, config.reponame)
     repodb_unexpected = repodb.get_unexpected_files(repo.pkglist)
     repodb_missing = repodb.get_missing_files(repo.pkglist)
-    repodb_missingsig = repodb.get_missing_sigfiles(repo.pkglist)
+    # repodb_missingsig = repodb.get_missing_sigfiles(repo.pkglist)
 
-    for missing_dbfile in repodb_missing + repodb_missingsig:
+    for missing_dbfile in repodb_missing:
         repodb.add_package(repopath + '/' + missing_dbfile)
 
     for unexpected_dbfile in repodb_unexpected:
@@ -64,15 +64,17 @@ for arch in ['i686', 'x86_64']:
         builder.build(current_pkgbase)
         repo.parse()
         repo_unfinished = repo.get_unfinished_pkgbases(pkgbases)
-
         repodb_missing = repodb.get_missing_files(repo.pkglist)
 
         for missing_dbfile in repodb_missing:
             repodb.add_package(repopath + '/' + missing_dbfile)
         repodb.finalize()
 
-    for missing_signature in repo.get_missing_sigfiles(pkgbases):
+    for missing_signature in repo.get_missing_sigfiles():
         repo.sign_file(missing_signature)
 
+    repo.parse()
     for missing_dbfile in repodb.get_missing_sigfiles(repo.pkglist):
         repodb.add_package(repopath + '/' + missing_dbfile)
+    repodb.finalize()
+    repo.sign_db()

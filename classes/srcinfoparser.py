@@ -8,7 +8,8 @@ class SrcinfoParser:
             'packages': {},
             'provides': [],
             'depends': [],
-            'makedepends': []
+            'makedepends': [],
+            'checkdepends': []
         }
         self.directory = os.path.dirname(filename)
 

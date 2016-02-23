@@ -14,6 +14,7 @@ class Builder:
         self.image_name = "repo-gen-" + self.arch
 
         fnull = open(os.devnull, 'w')
+        subprocess.call(['docker', 'stop', self.tmp_name], stdout=fnull, stderr=subprocess.STDOUT)
         subprocess.call(['docker', 'rm', self.tmp_name], stdout=fnull, stderr=subprocess.STDOUT)
 
         subprocess.call(['docker', 'run', '-t', '--name=' + self.tmp_name, self.image_name, 'setarch', self.arch,

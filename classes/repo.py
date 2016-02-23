@@ -45,7 +45,8 @@ class Repo:
         self.pkglist = []
 
         for packagename in os.listdir(self.repopath):
-            self.pkglist.append(packagename)
+            if packagename.endswith('.pkg.tar.xz'):
+                self.pkglist.append(packagename)
 
     def remove_file(self, file):
         filepath = self.repopath + '/' + file
@@ -57,9 +58,13 @@ class Repo:
         self.parse()
 
     def sign_file(self, filepath):
-        subprocess.call(['gpg',
-                         '--detach-sign',
-                         self.repopath + '/' + re.split('(.*?)\.sig', filepath)[1]])
+        source_path = self.repopath + '/' + re.split('(.*?)\.sig', filepath)[1]
+        if not os.path.isfile(source_path) or os.path.getmtime(self.repopath + '/' + filepath) < os.path.getmtime(
+                source_path):
+            subprocess.call(['gpg',
+                             '--detach-sign',
+                             '--yes',
+                             source_path])
 
     def get_unsigned_files(self):
         temp_array = []
@@ -92,38 +97,44 @@ class Repo:
                           self.reponame + '.db.sig', self.reponame + '.db' + self.dbfileext + '.sig',
                           self.reponame + '.files.sig', self.reponame + '.files' + self.dbfileext + '.sig']
         for pkgbase in pkgbases:
-            expected_files += pkgbase.get_expected_pkgnames(self.arch) + pkgbase.get_expected_dbgnames(self.arch)
-            expected_files += pkgbase.get_expected_pkgsignames(self.arch) + pkgbase.get_expected_dbgsignames(self.arch)
+            expected_files += pkgbase.get_expected_pkgnames(self.arch)
+            expected_files += pkgbase.get_expected_pkgsignames(self.arch)
 
         temp_array = []
         for file in expected_files:
-            if file not in self.pkglist:
+            if file not in os.listdir(self.repopath):
                 temp_array.append(file)
 
         MessagePrinter.print_msg2('Missing files in repo: ' +
                                   str(temp_array.__len__()))
         return temp_array
 
-    def get_missing_sigfiles(self, pkgbases):
-        expected_files = [self.reponame + '.db.sig', self.reponame + '.db' + self.dbfileext + '.sig',
-                          self.reponame + '.files.sig', self.reponame + '.files' + self.dbfileext + '.sig']
-        for pkgbase in pkgbases:
-            expected_files += pkgbase.get_expected_pkgsignames(self.arch) + pkgbase.get_expected_dbgsignames(self.arch)
+    def get_missing_sigfiles(self):
+        expected_files = []
+        for file in self.pkglist:
+            expected_files.append(file + '.sig')
 
         temp_array = []
         for file in expected_files:
-            if file not in self.pkglist:
+            if file not in os.listdir(self.repopath):
                 temp_array.append(file)
 
         MessagePrinter.print_msg2('Missing sigfiles in repo: ' +
                                   str(temp_array.__len__()))
         return temp_array
 
+    def sign_db(self):
+        expected_files = [self.reponame + '.db.sig', self.reponame + '.db' + self.dbfileext + '.sig',
+                          self.reponame + '.files.sig', self.reponame + '.files' + self.dbfileext + '.sig']
+        for file in expected_files:
+            self.sign_file(file)
+
     def get_unfinished_pkgbases(self, pkgbases):
         temp_array = []
         for pkgbase in pkgbases:
             unfinished = False
-            for file in pkgbase.get_expected_pkgnames(self.arch) + pkgbase.get_expected_dbgnames(self.arch):
+            # Do not check for missing debug packages. There's no distinct indicator for when there is a debug package
+            for file in pkgbase.get_expected_pkgnames(self.arch):
                 if file not in self.pkglist:
                     unfinished = True
             if unfinished:

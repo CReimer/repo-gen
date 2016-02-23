@@ -40,7 +40,9 @@ class BuildOrder:
                 pkgbase = pkgbase_by_name_copy[name]
                 append = False
                 only_external_deps = True
-                for pkgname in pkgbase.values['depends'] + pkgbase.values['makedepends']:
+                for pkgname in pkgbase.values['depends'] + \
+                        pkgbase.values['makedepends'] + \
+                        pkgbase.values['checkdepends']:
                     if pkgname in pkgbase_by_name_copy.keys():
                         only_external_deps = False
                         if pkgname in buildorder:

@@ -12,6 +12,7 @@ class Repodb:
         self.compression = 'gz'
         self.path = path
         self.name = name
+        self.changed = False
 
         self.tempdir = {'db': tempfile.mkdtemp(),
                         'files': tempfile.mkdtemp()}
@@ -24,10 +25,16 @@ class Repodb:
             except FileNotFoundError:
                 MessagePrinter.print_warning("Cannot read " + tarpath)
                 tar = tarfile.open(tarpath, 'w:' + self.compression)
+                self.changed = True
             tar.extractall(self.tempdir[dbtype])
             tar.close()
 
     def finalize(self):
+        if self.changed:
+            self.changed = False
+        else:
+            return
+
         for dbtype in self.tempdir:
             tarpath = self.path + '/' + self.name + '.' + dbtype + '.tar.' + self.compression
             os.remove(tarpath)
@@ -40,13 +47,14 @@ class Repodb:
             symlinkpath = self.path + '/' + self.name + '.' + dbtype
 
             try:
-                os.symlink(tarpath, symlinkpath)
+                os.symlink(os.path.basename(tarpath), symlinkpath)
             except FileExistsError:
                 os.remove(symlinkpath)
                 os.symlink(os.path.basename(tarpath), symlinkpath)
 
     def add_package(self, file):
         for dbtype in self.tempdir:
+            self.changed = True
             package = Package(file)
 
             abs_path = self.tempdir[dbtype] + '/' + package.get_dbname()
@@ -72,6 +80,7 @@ class Repodb:
 
     def remove_package(self, dbfile):
         for dbtype in self.tempdir:
+            self.changed = True
             dirname = self.tempdir[dbtype] + '/' + dbfile
             if os.path.isdir(dirname):
                 shutil.rmtree(dirname)
@@ -98,7 +107,10 @@ class Repodb:
         temp_array = []
         for file in db_files:
             if 'PGPSIG' not in open(self.tempdir[dbtype] + '/' + file + '/desc').read():
-                temp_array.append(pkgnames_by_dbnames[file])
+                try:
+                    temp_array.append(pkgnames_by_dbnames[file])
+                except KeyError:
+                    pass
 
         MessagePrinter.print_msg2('Missing signatures in database: ' +
                                   str(temp_array.__len__()))
