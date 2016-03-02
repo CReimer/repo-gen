@@ -25,7 +25,7 @@ options.target = os.path.abspath(options.target)
 
 config = Config('repo-gen.json')
 
-buildorder = BuildOrder(config.skip_directories)
+buildorder = BuildOrder(config)
 
 for arch in ['i686', 'x86_64']:
     MessagePrinter.print_msg("Building packages for " + arch)

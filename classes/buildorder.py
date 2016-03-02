@@ -5,15 +5,20 @@ from classes.srcinfoparser import SrcinfoParser
 
 
 class BuildOrder:
-    def __init__(self, skip_directories):
-
+    def __init__(self, config):
         pkgbase_by_name = {}
         self.pkgbase_in_buildorder = []
 
-        for filename in glob.iglob('./**/PKGBUILD', recursive=True):
+        pkgbuilds = []
+        if len(config.only_directories) > 0:
+            for directory in config.only_directories:
+                pkgbuilds += glob.glob(directory + '/**/PKGBUILD', recursive=True)
+        else:
+            pkgbuilds += glob.glob('./**/PKGBUILD', recursive=True)
 
+        for filename in pkgbuilds:
             skip = False
-            for skip_directory in skip_directories:
+            for skip_directory in config.skip_directories:
                 if filename.startswith('./' + skip_directory):
                     skip = True
             if skip:
