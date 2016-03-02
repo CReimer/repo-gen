@@ -1,5 +1,6 @@
 import glob
 import os
+import subprocess
 from classes.srcinfoparser import SrcinfoParser
 
 
@@ -17,6 +18,13 @@ class BuildOrder:
                     skip = True
             if skip:
                 continue
+
+            srcinfo_path = os.path.dirname(filename) + '/.SRCINFO'
+            if not os.path.isfile(srcinfo_path) or os.path.getmtime(srcinfo_path) < os.path.getmtime(filename):
+                curdir = os.path.abspath('.')
+                os.chdir(os.path.dirname(filename))
+                subprocess.call(['mksrcinfo'])
+                os.chdir(curdir)
 
             pkgbase = SrcinfoParser(os.path.dirname(filename) + '/.SRCINFO')
 

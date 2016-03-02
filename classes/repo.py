@@ -59,8 +59,8 @@ class Repo:
 
     def sign_file(self, filepath):
         source_path = self.repopath + '/' + re.split('(.*?)\.sig', filepath)[1]
-        if not os.path.isfile(source_path) or os.path.getmtime(self.repopath + '/' + filepath) < os.path.getmtime(
-                source_path):
+        target_path = self.repopath + '/' + filepath
+        if not os.path.isfile(target_path) or os.path.getmtime(target_path) < os.path.getmtime(source_path):
             subprocess.call(['gpg',
                              '--detach-sign',
                              '--yes',
