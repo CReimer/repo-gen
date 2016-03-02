@@ -7,7 +7,13 @@ class Config:
         with open(filename) as data_file:
             data = json.load(data_file)
 
-        self.skip_directories = data['skip_directories']
-        self.only_directories = data['only_directories']
+        try:
+            self.skip_directories = data['skip_directories']
+        except KeyError:
+            self.skip_directories = []
+        try:
+            self.only_directories = data['only_directories']
+        except KeyError:
+            self.only_directories = []
         self.reponame = data['repo_name']
         self.check_script = data['check_script']

@@ -9,6 +9,8 @@ class Builder:
         self.config = _config
         self.arch = _arch
         self.srcdir = _directory
+        self.pkgcache = _directory + '/repo-gen-cache/' + _arch
+        os.makedirs(self.pkgcache)
 
         self.tmp_name = "temporary-repo-gen-" + self.arch
         self.image_name = "repo-gen-" + self.arch
@@ -17,7 +19,9 @@ class Builder:
         subprocess.call(['docker', 'stop', self.tmp_name], stdout=fnull, stderr=subprocess.STDOUT)
         subprocess.call(['docker', 'rm', self.tmp_name], stdout=fnull, stderr=fnull)
 
-        subprocess.call(['docker', 'run', '-t', '--name=' + self.tmp_name, self.image_name, 'setarch', self.arch,
+        subprocess.call(['docker', 'run', '-t',
+                         '-v', os.path.abspath(self.pkgcache) + ':/var/cache/pacman/pkg',
+                         '--name=' + self.tmp_name, self.image_name, 'setarch', self.arch,
                          'bash', '-c',
                          'pacman -Syu --noconfirm; pacman -Sc --noconfirm'])
 
@@ -36,7 +40,8 @@ class Builder:
             subprocess.call(['docker', 'rm', self.tmp_name], stdout=fnull, stderr=fnull)
             fnull.close()
             exitcode = subprocess.call(['docker', 'run', '--rm', '-t',
-                                        '-v', os.path.abspath(pkgbase.directory) + ':/startdir',
+                                        '-v', os.path.abspath(self.pkgcache) + ':/var/cache/pacman/pkg',
+                                        '-v', os.path.abspath(pkgbase.directory) + ':/startdir:ro',
                                         '-v', os.path.abspath(self.repopath) + ':/pkgdest',
                                         '--name=' + self.tmp_name,
                                         self.image_name,
