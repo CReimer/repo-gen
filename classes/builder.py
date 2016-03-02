@@ -15,7 +15,7 @@ class Builder:
 
         fnull = open(os.devnull, 'w')
         subprocess.call(['docker', 'stop', self.tmp_name], stdout=fnull, stderr=subprocess.STDOUT)
-        subprocess.call(['docker', 'rm', self.tmp_name], stdout=fnull, stderr=subprocess.STDOUT)
+        subprocess.call(['docker', 'rm', self.tmp_name], stdout=fnull, stderr=fnull)
 
         subprocess.call(['docker', 'run', '-t', '--name=' + self.tmp_name, self.image_name, 'setarch', self.arch,
                          'bash', '-c',
@@ -25,13 +25,16 @@ class Builder:
                          'docker export ' + self.tmp_name + '|' +
                          'docker import - ' + self.image_name], stdout=fnull, stderr=subprocess.STDOUT)
 
-        subprocess.call(['docker', 'rm', self.tmp_name], stdout=fnull, stderr=subprocess.STDOUT)
+        subprocess.call(['docker', 'rm', self.tmp_name], stdout=fnull, stderr=fnull)
         subprocess.call(['bash', '-c', "docker images --quiet --filter=dangling=true | " +
                                        "xargs --no-run-if-empty docker rmi"], stdout=fnull, stderr=subprocess.STDOUT)
+        fnull.close()
 
     def build(self, pkgbase):
 
-            subprocess.call(['docker', 'rm', self.tmp_name])
+            fnull = open(os.devnull, 'w')
+            subprocess.call(['docker', 'rm', self.tmp_name], stdout=fnull, stderr=fnull)
+            fnull.close()
             exitcode = subprocess.call(['docker', 'run', '--rm', '-t',
                                         '-v', os.path.abspath(pkgbase.directory) + ':/startdir',
                                         '-v', os.path.abspath(self.repopath) + ':/pkgdest',
