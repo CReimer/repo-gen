@@ -19,5 +19,9 @@ class Config:
             self.sign = data['sign']
         except KeyError:
             self.sign = False
+        try:
+            self.arch = data['only_architecture']
+        except KeyError:
+            self.arch = ['i686', 'x86_64']
         self.reponame = data['repo_name']
         self.check_script = data['check_script']
