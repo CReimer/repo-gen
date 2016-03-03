@@ -33,7 +33,7 @@ for arch in ['i686', 'x86_64']:
     repopath = options.target + '/' + config.reponame + '/os/' + arch
     pkgbases = buildorder.pkgbase_in_buildorder
 
-    repo = Repo(repopath, config.reponame, arch)
+    repo = Repo(repopath, config, arch)
     repo_unexpected = repo.get_unexpected_files(pkgbases)
     # repo_missing = repo.get_missing_files(pkgbases)
     repo_missingsig = repo.get_missing_sigfiles()
@@ -42,7 +42,7 @@ for arch in ['i686', 'x86_64']:
     for unexpected_file in repo_unexpected:
         repo.remove_file(unexpected_file)
 
-    repodb = Repodb(repopath, config.reponame)
+    repodb = Repodb(repopath, config)
     repodb_unexpected = repodb.get_unexpected_files(repo.pkglist)
     repodb_missing = repodb.get_missing_files(repo.pkglist)
     # repodb_missingsig = repodb.get_missing_sigfiles(repo.pkglist)

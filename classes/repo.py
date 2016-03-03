@@ -5,7 +5,9 @@ from classes.messageprinter import MessagePrinter
 
 
 class Repo:
-    def __init__(self, dirname, name, arch):
+    def __init__(self, dirname, config, arch):
+        name = config.reponame
+        self.config = config
         self.repopath = dirname
         self.reponame = name
         self.arch = arch
@@ -58,6 +60,8 @@ class Repo:
         self.parse()
 
     def sign_file(self, filepath):
+        if not self.config.sign:
+            return
         source_path = self.repopath + '/' + re.split('(.*?)\.sig', filepath)[1]
         target_path = self.repopath + '/' + filepath
         if not os.path.isfile(target_path) or os.path.getmtime(target_path) < os.path.getmtime(source_path):
@@ -110,6 +114,8 @@ class Repo:
         return temp_array
 
     def get_missing_sigfiles(self):
+        if not self.config.sign:
+            return []
         expected_files = []
         for file in self.pkglist:
             expected_files.append(file + '.sig')
@@ -124,6 +130,8 @@ class Repo:
         return temp_array
 
     def sign_db(self):
+        if not self.config.sign:
+            return
         expected_files = [self.reponame + '.db.sig', self.reponame + '.db' + self.dbfileext + '.sig',
                           self.reponame + '.files.sig', self.reponame + '.files' + self.dbfileext + '.sig']
         for file in expected_files:

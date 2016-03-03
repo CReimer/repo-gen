@@ -8,9 +8,10 @@ from classes.messageprinter import MessagePrinter
 
 
 class Repodb:
-    def __init__(self, path, name):
+    def __init__(self, config, name):
+        self.config = config
         self.compression = 'gz'
-        self.path = path
+        self.path = config.reponame
         self.name = name
         self.changed = False
 
@@ -86,6 +87,8 @@ class Repodb:
                 shutil.rmtree(dirname)
 
     def get_missing_sigfiles(self, filelist):
+        if not self.config.sign:
+            return []
         dbtype = 'db'
         tarpath = self.path + '/' + self.name + '.' + dbtype + '.tar.' + self.compression
         tar = tarfile.open(tarpath)

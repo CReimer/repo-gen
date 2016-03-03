@@ -15,5 +15,9 @@ class Config:
             self.only_directories = data['only_directories']
         except KeyError:
             self.only_directories = []
+        try:
+            self.sign = data['sign']
+        except KeyError:
+            self.sign = False
         self.reponame = data['repo_name']
         self.check_script = data['check_script']
