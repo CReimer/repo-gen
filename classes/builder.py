@@ -38,7 +38,7 @@ class Builder:
         fnull.close()
 
     def build(self, pkgbase):
-
+            MessagePrinter.print_msg('Building ' + pkgbase)
             fnull = open(os.devnull, 'w')
             subprocess.call(['docker', 'rm', self.tmp_name], stdout=fnull, stderr=fnull)
             fnull.close()

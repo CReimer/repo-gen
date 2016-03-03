@@ -62,7 +62,9 @@ class Repo:
     def sign_file(self, filepath):
         if not self.config.sign:
             return
+
         source_path = self.repopath + '/' + re.split('(.*?)\.sig', filepath)[1]
+        MessagePrinter.print_msg('Signing ' + os.path.basename(source_path))
         target_path = self.repopath + '/' + filepath
         if not os.path.isfile(target_path) or os.path.getmtime(target_path) < os.path.getmtime(source_path):
             subprocess.call(['gpg',

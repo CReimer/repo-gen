@@ -54,10 +54,12 @@ class Repodb:
                 os.symlink(os.path.basename(tarpath), symlinkpath)
 
     def add_package(self, file):
-        for dbtype in self.tempdir:
-            self.changed = True
-            package = Package(file)
+        self.changed = True
+        package = Package(file)
 
+        MessagePrinter.print_msg('Adding ' + package.pkginfo.values['pkgname'][0] + ' to database')
+
+        for dbtype in self.tempdir:
             abs_path = self.tempdir[dbtype] + '/' + package.get_dbname()
 
             try:

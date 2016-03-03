@@ -28,7 +28,7 @@ config = Config('repo-gen.json')
 buildorder = BuildOrder(config)
 
 for arch in config.arch:
-    MessagePrinter.print_msg("Building packages for " + arch)
+    MessagePrinter.print_msg("Starting process for " + arch + " architecture")
 
     repopath = options.target + '/' + config.reponame + '/os/' + arch
     pkgbases = buildorder.pkgbase_in_buildorder
