@@ -8,11 +8,11 @@ from classes.messageprinter import MessagePrinter
 
 
 class Repodb:
-    def __init__(self, config, name):
+    def __init__(self, path, config):
         self.config = config
         self.compression = 'gz'
-        self.path = config.reponame
-        self.name = name
+        self.path = path
+        self.name = config.reponame
         self.changed = False
 
         self.tempdir = {'db': tempfile.mkdtemp(),
