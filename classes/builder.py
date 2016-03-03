@@ -10,7 +10,10 @@ class Builder:
         self.arch = _arch
         self.srcdir = _directory
         self.pkgcache = _directory + '/repo-gen-cache/' + _arch
-        os.makedirs(self.pkgcache)
+        try:
+            os.makedirs(self.pkgcache)
+        except FileExistsError:
+            pass
 
         self.tmp_name = "temporary-repo-gen-" + self.arch
         self.image_name = "repo-gen-" + self.arch
