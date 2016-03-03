@@ -20,7 +20,11 @@ class Config:
         except KeyError:
             self.sign = False
         try:
-            self.arch = data['only_architecture']
+            temp_var = data['only_architecture']
+            if isinstance(temp_var, list):
+                self.arch = temp_var
+            else:
+                self.arch = [temp_var]
         except KeyError:
             self.arch = ['i686', 'x86_64']
         self.reponame = data['repo_name']
