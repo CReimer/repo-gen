@@ -1,8 +1,12 @@
 import json
+import platform
 
 
 class Config:
     def __init__(self, filename):
+
+        x86 = ['i686', 'x86_64']
+        arm = ['arm', 'armv6h', 'armv7h', 'armv8h']
 
         with open(filename) as data_file:
             data = json.load(data_file)
@@ -26,6 +30,14 @@ class Config:
             else:
                 self.arch = [temp_var]
         except KeyError:
-            self.arch = ['i686', 'x86_64']
+            if platform.machine() in x86:
+                index = x86.index(platform.machine())
+                self.arch = x86[:index+1]
+            elif platform.machine() in arm:
+                index = arm.index(platform.machine())
+                self.arch = arm[:index+1]
+            else:
+                exit()
+
         self.reponame = data['repo_name']
         self.check_script = data['check_script']

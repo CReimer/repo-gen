@@ -23,7 +23,6 @@ class Builder:
         subprocess.call(['docker', 'rm', self.tmp_name], stdout=fnull, stderr=fnull)
 
         subprocess.call(['docker', 'run', '-t',
-                         '-v', os.path.abspath(self.pkgcache) + ':/var/cache/pacman/pkg',
                          '--name=' + self.tmp_name, self.image_name, 'setarch', self.arch,
                          'bash', '-c',
                          'pacman -Syu --noconfirm; pacman -Sc --noconfirm'])

@@ -51,8 +51,10 @@ class SrcinfoParser:
             except KeyError:
                 if self.values['arch'][0] == 'any':
                     arch = 'any'
-                else:
+                elif _arch in self.values['arch']:
                     arch = _arch
+                else:
+                    continue
             temp_array.append(
                 "%s-%s%s-%s-%s.pkg.tar.xz" % (name, epoch, self.values['pkgver'][0], self.values['pkgrel'][0], arch))
 
