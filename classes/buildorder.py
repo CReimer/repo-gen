@@ -28,13 +28,7 @@ class BuildOrder:
             if not os.path.isfile(srcinfo_path) or os.path.getmtime(srcinfo_path) < os.path.getmtime(filename):
                 curdir = os.path.abspath('.')
                 os.chdir(os.path.dirname(filename))
-                proc = subprocess.Popen(['makepkg', '--printsrcinfo'], stdout=subprocess.PIPE)
-                f = open('./.SRCINFO', 'w')
-
-                for line in proc.stdout:
-                    f.write(line.decode())
-
-                f.close()
+                subprocess.call(['mksrcinfo'])
                 os.chdir(curdir)
 
             pkgbase = SrcinfoParser(os.path.dirname(filename) + '/.SRCINFO')

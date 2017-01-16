@@ -1,0 +1,6 @@
+repo-gen
+
+A small project of mine to automate repository building for Arch Linux.
+It's one of my first projects with python and I think I got a bit too much carried away with all the docker stuff
+
+But since it's quite stable for the VDR4Arch build process I'd finally like to share it.

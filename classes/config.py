@@ -40,4 +40,4 @@ class Config:
                 exit()
 
         self.reponame = data['repo_name']
-        self.check_script = data['check_script']
+        #self.check_script = data['check_script']
