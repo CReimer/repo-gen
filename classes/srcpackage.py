@@ -5,13 +5,14 @@ import subprocess
 
 class SrcPackage:
     def __init__(self, directory):
-        self.values = {
+        self.__values = {
             'packages': {},
             'provides': [],
             'depends': [],
             'makedepends': [],
             'checkdepends': []
         }
+        self.enqueued = False
 
         srcinfo_path = directory + '/.SRCINFO'
         pkgbuild_path = directory + '/PKGBUILD'
@@ -23,7 +24,7 @@ class SrcPackage:
 
         with open(srcinfo_path) as f:
             lines = f.readlines()
-            targetobj = self.values
+            targetobj = self.__values
             for line in lines:
                 try:
                     try:
@@ -33,8 +34,8 @@ class SrcPackage:
 
                     value = line.split('= ')[1].rstrip()
                     if key == 'pkgname':
-                        self.values['packages'][value] = {}
-                        targetobj = self.values['packages'][value]
+                        self.__values['packages'][value] = {}
+                        targetobj = self.__values['packages'][value]
                         continue
 
                     if key in ['depends', 'makedepends', 'checkdepends', 'provides']:
@@ -53,42 +54,43 @@ class SrcPackage:
                 except IndexError:
                     continue
 
-    def get_expected_pkgnames(self, _arch):
+    def get_expected_pkgfile_names(self, _arch):
         temp_array = []
 
         try:
-            epoch = self.values['epoch'][0] + ':'
+            epoch = self.__values['epoch'][0] + ':'
         except KeyError:
             epoch = ''
 
-        for name in self.values['packages']:
+        for name in self.__values['packages']:
             try:
-                arch = self.values['packages'][name]['arch'][0]
+                arch = self.__values['packages'][name]['arch'][0]
             except KeyError:
-                if self.values['arch'][0] == 'any':
+                if self.__values['arch'][0] == 'any':
                     arch = 'any'
-                elif _arch in self.values['arch']:
+                elif _arch in self.__values['arch']:
                     arch = _arch
                 else:
                     continue
             temp_array.append(
-                "%s-%s%s-%s-%s.pkg.tar.xz" % (name, epoch, self.values['pkgver'][0], self.values['pkgrel'][0], arch))
+                "%s-%s%s-%s-%s.pkg.tar.xz" % (
+                name, epoch, self.__values['pkgver'][0], self.__values['pkgrel'][0], arch))
 
         return temp_array
 
-    def get_expected_dbgnames(self, _arch):
+    def get_expected_dbgfile_names(self, _arch):
         temp_array = []
 
         try:
-            epoch = self.values['epoch'][0] + ':'
+            epoch = self.__values['epoch'][0] + ':'
         except KeyError:
             epoch = ''
 
-        for name in self.values['packages']:
+        for name in self.__values['packages']:
             try:
-                arch = self.values['packages'][name]['arch'][0]
+                arch = self.__values['packages'][name]['arch'][0]
             except KeyError:
-                if self.values['arch'][0] == 'any':
+                if self.__values['arch'][0] == 'any':
                     arch = 'any'
                 else:
                     arch = _arch
@@ -96,18 +98,38 @@ class SrcPackage:
             if not arch == 'any':
                 temp_array.append(
                     "%s-debug-%s%s-%s-%s.pkg.tar.xz" % (
-                        name, epoch, self.values['pkgver'][0], self.values['pkgrel'][0], arch))
+                        name, epoch, self.__values['pkgver'][0], self.__values['pkgrel'][0], arch))
 
         return temp_array
 
-    def get_expected_pkgsignames(self, arch):
+    def get_expected_pkgsigfile_names(self, arch):
         temp_array = []
-        for name in self.get_expected_pkgnames(arch):
+        for name in self.get_expected_pkgfile_names(arch):
             temp_array.append(name + '.sig')
         return temp_array
 
-    def get_expected_dbgsignames(self, arch):
+    def get_expected_dbgsigfile_names(self, arch):
         temp_array = []
-        for name in self.get_expected_dbgnames(arch):
+        for name in self.get_expected_dbgfile_names(arch):
             temp_array.append(name + '.sig')
         return temp_array
+
+    def get_packages(self):
+        return list(self.__values['packages'].keys())
+
+    def get_provides(self):
+        provides = self.__values['provides']
+        for package in self.__values['packages'].keys():
+            try:
+                for provide in self.__values['packages'][package]['provides']:
+                    provides.append(provide)
+
+            except KeyError:
+                continue
+        return provides
+
+    def get_depends(self):
+        return self.__values['depends'] + self.__values['makedepends'] + self.__values['checkdepends']
+
+    def get_pkgbase(self):
+        return self.__values['pkgbase'][0]

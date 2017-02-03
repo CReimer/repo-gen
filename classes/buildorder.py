@@ -1,11 +1,16 @@
 import glob
 import os
 from classes.srcpackage import SrcPackage
+from collections import OrderedDict
+
+
+class CircularDepException(Exception):
+    pass
 
 
 class BuildOrder:
     def __init__(self, config):
-        pkgbase_by_name = {}
+        self.__pkgbase_by_name = OrderedDict()
         self.pkgbase_in_buildorder = []
 
         pkgbuilds = []
@@ -24,40 +29,43 @@ class BuildOrder:
                 continue
 
             pkgbase = SrcPackage(os.path.dirname(filename))
-            self.pkgbases.append(pkgbase)
 
-            provides = pkgbase.values['provides']
-
-            for name in pkgbase.values['packages']:
-                pkgbase_by_name[name] = pkgbase
+            for name in pkgbase.get_packages() + pkgbase.get_provides():
+                # We have provides in here. So one pkgname could be resolved by multiple pkgbases.
                 try:
-                    provides += pkgbase.values['packages'][name]['provides']
+                    self.__pkgbase_by_name[name].append(pkgbase)
                 except KeyError:
-                    continue
+                    self.__pkgbase_by_name[name] = [pkgbase]
 
-            for name in provides:
-                pkgbase_by_name[name] = pkgbase
+        for name in self.__pkgbase_by_name:
+            for pkgbase in self.__pkgbase_by_name[name]:
+                try:
+                    self.pkgbase_in_buildorder += self.collect_dependencies(pkgbase)
+                except CircularDepException as e:
+                    for f in e.args[1]:
+                        print(f.get_pkgbase() + ' --> ', end='')
+                    print(e.args[0].get_pkgbase())
 
-        buildorder = []
-        pkgbase_by_name_copy = dict(pkgbase_by_name)
+    def collect_dependencies(self, base_pkgbase, circular_reference=None):
+        if circular_reference is None:
+            circular_reference = []
+        dependencies = []
+        if base_pkgbase.enqueued:
+            return []
 
-        while len(pkgbase_by_name_copy) > 0:
-            for name in pkgbase_by_name_copy:
-                pkgbase = pkgbase_by_name_copy[name]
-                append = False
-                only_external_deps = True
-                for pkgname in pkgbase.values['depends'] + \
-                        pkgbase.values['makedepends'] + \
-                        pkgbase.values['checkdepends']:
-                    if pkgname in pkgbase_by_name_copy.keys():
-                        only_external_deps = False
-                        if pkgname in buildorder:
-                            append = True
-                        else:
-                            append = False
-                if append or only_external_deps:
-                    pkgbase_by_name_copy.pop(name)
-                    buildorder.append(name)
-                    if not pkgbase_by_name[name] in self.pkgbase_in_buildorder:
-                        self.pkgbase_in_buildorder.append(pkgbase_by_name[name])
-                    break
+        for dependency in base_pkgbase.get_depends():
+            try:
+                for pkgbase in self.__pkgbase_by_name[dependency]:
+                    if pkgbase.enqueued:
+                        continue  # It's already in the buildqueue so it's not interesting anymore
+                    if pkgbase in circular_reference:
+                        # We've been here before. Looks like we have a circular dependency here.
+                        raise CircularDepException(pkgbase, circular_reference)
+                    circular_reference.append(pkgbase)
+                    dependencies += self.collect_dependencies(pkgbase, circular_reference)
+
+            except KeyError:
+                continue  # Everything that's not in this directory is expected to be already reachable for pacman
+        dependencies.append(base_pkgbase)
+        base_pkgbase.enqueued = True
+        return dependencies

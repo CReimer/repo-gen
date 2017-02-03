@@ -85,8 +85,8 @@ class Repo:
                           self.reponame + '.db.sig', self.reponame + '.db' + self.dbfileext + '.sig',
                           self.reponame + '.files.sig', self.reponame + '.files' + self.dbfileext + '.sig']
         for pkgbase in pkgbases:
-            expected_files += pkgbase.get_expected_pkgnames(self.arch) + pkgbase.get_expected_dbgnames(self.arch)
-            expected_files += pkgbase.get_expected_pkgsignames(self.arch) + pkgbase.get_expected_dbgsignames(self.arch)
+            expected_files += pkgbase.get_expected_pkgfile_names(self.arch) + pkgbase.get_expected_dbgfile_names(self.arch)
+            expected_files += pkgbase.get_expected_pkgsigfile_names(self.arch) + pkgbase.get_expected_dbgsigfile_names(self.arch)
 
         temp_array = []
         for file in self.pkglist:
@@ -103,8 +103,8 @@ class Repo:
                           self.reponame + '.db.sig', self.reponame + '.db' + self.dbfileext + '.sig',
                           self.reponame + '.files.sig', self.reponame + '.files' + self.dbfileext + '.sig']
         for pkgbase in pkgbases:
-            expected_files += pkgbase.get_expected_pkgnames(self.arch)
-            expected_files += pkgbase.get_expected_pkgsignames(self.arch)
+            expected_files += pkgbase.get_expected_pkgfile_names(self.arch)
+            expected_files += pkgbase.get_expected_pkgsigfile_names(self.arch)
 
         temp_array = []
         for file in expected_files:
@@ -144,7 +144,7 @@ class Repo:
         for pkgbase in pkgbases:
             unfinished = False
             # Do not check for missing debug packages. There's no distinct indicator for when there is a debug package
-            for file in pkgbase.get_expected_pkgnames(self.arch):
+            for file in pkgbase.get_expected_pkgfile_names(self.arch):
                 if file not in self.pkglist:
                     unfinished = True
             if unfinished:

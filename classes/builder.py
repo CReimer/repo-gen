@@ -61,9 +61,9 @@ class Builder:
                 exit(1)
 
     def move_to_repo(self, pkgbase, _repo):
-            for filename in pkgbase.get_expected_pkgnames(self.arch):
+            for filename in pkgbase.get_expected_pkgfile_names(self.arch):
                 _repo.add_file(self.repopath + '/' + filename)
-            for filename in pkgbase.get_expected_dbgnames(self.arch):
+            for filename in pkgbase.get_expected_dbgfile_names(self.arch):
                 try:
                     _repo.add_file(self.repopath + '/' + filename)
                 except OSError:
