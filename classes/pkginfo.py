@@ -1,7 +1,7 @@
 import tarfile
 
 
-class PkginfoParser:
+class Pkginfo:
     def __init__(self, filename):
         self.values = {}
 
