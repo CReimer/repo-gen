@@ -1,7 +1,10 @@
 import re
 import os
 
+import functools
 
+
+@functools.total_ordering
 class SrcinfoParser:
     def __init__(self, filename):
         self.values = {
@@ -27,6 +30,14 @@ class SrcinfoParser:
                     if key == 'pkgname':
                         self.values['packages'][value] = {}
                         targetobj = self.values['packages'][value]
+                        continue
+
+                    if key in ['depends', 'makedepends', 'checkdepends', 'provides']:
+                        try:
+                            targetobj[key].append(re.sub('[><=].*', '', value))
+                        except KeyError:
+                            targetobj[key] = []
+                            targetobj[key].append(re.sub('[><=].*', '', value))
                         continue
 
                     try:
@@ -95,3 +106,26 @@ class SrcinfoParser:
         for name in self.get_expected_dbgnames(arch):
             temp_array.append(name + '.sig')
         return temp_array
+
+    def __eq__(self, other):
+        return 0
+
+    def __gt__(self, other):
+        boolean = True
+        for pkgname in other.values['depends'] + \
+                other.values['makedepends'] + \
+                other.values['checkdepends']:
+            if pkgname in list(self.values['packages'].keys()) + self.values['provides']:
+                boolean = False
+
+        return boolean
+
+    def __lt__(self, other):
+        boolean = True
+        for pkgname in self.values['depends'] + \
+                self.values['makedepends'] + \
+                self.values['checkdepends']:
+            if pkgname in list(other.values['packages'].keys()) + other.values['provides']:
+                boolean = False
+
+        return boolean
