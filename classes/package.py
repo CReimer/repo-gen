@@ -1,4 +1,4 @@
-from classes.pkginfoparser import PkginfoParser
+from classes.repopackage import RepoPackage
 from collections import OrderedDict
 import os
 import hashlib
@@ -32,7 +32,7 @@ class Package:
             ("checkdepends", "CHECKDEPENDS")
         ])
 
-        self.pkginfo = PkginfoParser(filename)
+        self.pkginfo = RepoPackage(filename)
 
     def get_depends_file(self):
         return_string = ''

@@ -1,9 +1,10 @@
 import re
 import os
+import subprocess
 
 
-class Srcinfo:
-    def __init__(self, filename):
+class SrcPackage:
+    def __init__(self, directory):
         self.values = {
             'packages': {},
             'provides': [],
@@ -11,9 +12,16 @@ class Srcinfo:
             'makedepends': [],
             'checkdepends': []
         }
-        self.directory = os.path.dirname(filename)
 
-        with open(filename) as f:
+        srcinfo_path = directory + '/.SRCINFO'
+        pkgbuild_path = directory + '/PKGBUILD'
+        if not os.path.isfile(srcinfo_path) or os.path.getmtime(srcinfo_path) < os.path.getmtime(pkgbuild_path):
+            curdir = os.path.abspath('.')
+            os.chdir(directory)
+            subprocess.call(['mksrcinfo'])
+            os.chdir(curdir)
+
+        with open(srcinfo_path) as f:
             lines = f.readlines()
             targetobj = self.values
             for line in lines:

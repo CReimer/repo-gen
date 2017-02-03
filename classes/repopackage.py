@@ -1,7 +1,7 @@
 import tarfile
 
 
-class Pkginfo:
+class RepoPackage:
     def __init__(self, filename):
         self.values = {}
 
